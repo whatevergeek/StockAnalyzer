@@ -26,9 +26,19 @@ namespace StockAnalyzer.Windows
             StockProgress.IsIndeterminate = true;
             #endregion
 
+            await GetTasks();
+
+            #region After stock data is loaded
+            StocksStatus.Text = $"Loaded stocks for {Ticker.Text} in {watch.ElapsedMilliseconds}ms";
+            StockProgress.Visibility = Visibility.Hidden;
+            #endregion
+        }
+
+        private async Task GetTasks()
+        {
             using (var client = new HttpClient())
             {
-                await Task.Delay(10000);
+                await Task.Delay(3000);
                 var response = await client.GetAsync($"http://localhost:5000/api/stocks/{Ticker.Text}");
 
                 try
@@ -46,13 +56,6 @@ namespace StockAnalyzer.Windows
                     Notes.Text += ex.Message;
                 }
             }
-
-
-
-            #region After stock data is loaded
-            StocksStatus.Text = $"Loaded stocks for {Ticker.Text} in {watch.ElapsedMilliseconds}ms";
-            StockProgress.Visibility = Visibility.Hidden;
-            #endregion
         }
 
         private void Hyperlink_OnRequestNavigate(object sender, RequestNavigateEventArgs e)
