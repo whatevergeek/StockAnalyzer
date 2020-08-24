@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows;
@@ -27,13 +26,28 @@ namespace StockAnalyzer.Windows
             StockProgress.IsIndeterminate = true;
             #endregion
 
-            var client = new WebClient();
+            using (var client = new HttpClient())
+            {
+                await Task.Delay(10000);
+                var response = await client.GetAsync($"http://localhost:5000/api/stocks/{Ticker.Text}");
 
-            var content = client.DownloadString($"http://localhost:5000/api/stocks/{Ticker.Text}");
+                try
+                {
+                    response.EnsureSuccessStatusCode();
 
-            var data = JsonConvert.DeserializeObject<IEnumerable<StockPrice>>(content);
+                    var content = await response.Content.ReadAsStringAsync();
 
-            Stocks.ItemsSource = data;
+                    var data = JsonConvert.DeserializeObject<IEnumerable<StockPrice>>(content);
+
+                    Stocks.ItemsSource = data;
+                }
+                catch (Exception ex)
+                {
+                    Notes.Text += ex.Message;
+                }
+            }
+
+
 
             #region After stock data is loaded
             StocksStatus.Text = $"Loaded stocks for {Ticker.Text} in {watch.ElapsedMilliseconds}ms";
